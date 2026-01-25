@@ -249,7 +249,7 @@ export default function Celebration() {
               ]}
             >
               <Text style={styles.secretText}>
-                P.S. I choose you every day.
+                P.S. I choose you every day, and your coochie can come get stretched again muah.
               </Text>
             </Animated.View>
           )}
