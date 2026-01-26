@@ -8,12 +8,15 @@ import {
   Modal,
   ScrollView,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
+
+const STICKER_BATMAN = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/ru45g92o_IMG_5369.jpeg';
 
 interface Memory {
   id: string;
