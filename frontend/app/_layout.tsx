@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import soundManager from './utils/sounds';
 
 const MUSIC_URL = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/230dit60_RealestK%20-%20It%27s%20Love%20%28Official%20Audio%29.mp3';
 
@@ -16,6 +17,11 @@ interface UserContextType {
 interface AudioContextType {
   isMuted: boolean;
   toggleMute: () => void;
+  playPop: () => void;
+  playClick: () => void;
+  playSuccess: () => void;
+  playMagic: () => void;
+  playComplete: () => void;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -26,6 +32,11 @@ const UserContext = createContext<UserContextType>({
 const AudioContext = createContext<AudioContextType>({
   isMuted: false,
   toggleMute: () => {},
+  playPop: () => {},
+  playClick: () => {},
+  playSuccess: () => {},
+  playMagic: () => {},
+  playComplete: () => {},
 });
 
 export const useUser = () => useContext(UserContext);
@@ -91,13 +102,13 @@ export default function RootLayout() {
           shouldDuckAndroid: true,
         });
 
-        // Load the sound
+        // Load background music
         const { sound: newSound } = await Audio.Sound.createAsync(
           { uri: MUSIC_URL },
           { 
             shouldPlay: true, 
             isLooping: true,
-            volume: 1.0,
+            volume: 0.7,
           }
         );
 
@@ -105,6 +116,9 @@ export default function RootLayout() {
           setSound(newSound);
           setIsLoaded(true);
         }
+
+        // Load UI sounds
+        await soundManager.loadSounds();
       } catch (error) {
         console.log('Error loading audio:', error);
       }
@@ -117,6 +131,7 @@ export default function RootLayout() {
       if (sound) {
         sound.unloadAsync();
       }
+      soundManager.unloadAll();
     };
   }, []);
 
@@ -125,18 +140,34 @@ export default function RootLayout() {
       if (isMuted) {
         sound.setVolumeAsync(0);
       } else {
-        sound.setVolumeAsync(1.0);
+        sound.setVolumeAsync(0.7);
       }
     }
+    soundManager.setMuted(isMuted);
   }, [isMuted, sound, isLoaded]);
 
   const toggleMute = () => {
+    soundManager.playClick();
     setIsMuted(!isMuted);
   };
 
+  const playPop = () => soundManager.playPop();
+  const playClick = () => soundManager.playClick();
+  const playSuccess = () => soundManager.playSuccess();
+  const playMagic = () => soundManager.playMagic();
+  const playComplete = () => soundManager.playComplete();
+
   return (
     <UserContext.Provider value={{ userName, setUserName }}>
-      <AudioContext.Provider value={{ isMuted, toggleMute }}>
+      <AudioContext.Provider value={{ 
+        isMuted, 
+        toggleMute, 
+        playPop, 
+        playClick, 
+        playSuccess, 
+        playMagic, 
+        playComplete 
+      }}>
         <SafeAreaProvider>
           <StatusBar style="dark" />
           <Stack
