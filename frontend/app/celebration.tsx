@@ -174,6 +174,24 @@ export default function Celebration() {
             </Text>
           </Animated.View>
 
+          {/* Photo Stickers */}
+          <Animated.View
+            style={[
+              styles.stickerLeft,
+              { transform: [{ translateY: floatTranslateY }, { rotate: '-12deg' }] },
+            ]}
+          >
+            <Image source={{ uri: STICKER_OCTOPUS }} style={styles.sticker} />
+          </Animated.View>
+          <Animated.View
+            style={[
+              styles.stickerRight,
+              { transform: [{ translateY: floatTranslateY }, { rotate: '10deg' }] },
+            ]}
+          >
+            <Image source={{ uri: STICKER_GOLD }} style={styles.sticker} />
+          </Animated.View>
+
           {/* Floating Memories */}
           <View style={styles.memoriesContainer}>
             {MEMORIES_FLOATING.map((memory, index) => (
