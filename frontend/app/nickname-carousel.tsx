@@ -87,6 +87,15 @@ export default function NicknameCarousel() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => { playClick(); router.back(); }}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
+      </TouchableOpacity>
+
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Text style={styles.title}>All My Names For You 💕</Text>
         <Text style={styles.subtitle}>Scroll through your nicknames!</Text>
