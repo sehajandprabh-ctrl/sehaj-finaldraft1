@@ -59,6 +59,7 @@ export default function Memories() {
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const cardAnims = useRef(MEMORIES.map(() => new Animated.Value(0))).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -78,7 +79,28 @@ export default function Memories() {
         })
       )
     ).start();
+
+    // Float animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, []);
+
+  const floatTranslate = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -10],
+  });
 
   const handleMemoryPress = (memory: Memory) => {
     setSelectedMemory(memory);
@@ -95,17 +117,27 @@ export default function Memories() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Batman Sticker - Heart Shaped */}
+      <Animated.View
+        style={[
+          styles.stickerContainer,
+          {
+            transform: [{ translateY: floatTranslate }, { rotate: '12deg' }],
+          },
+        ]}
+      >
+        <View style={styles.heartStickerWrapper}>
+          <Ionicons name="heart" size={120} color="#333" style={styles.heartBg} />
+          <Image
+            source={{ uri: STICKER_BATMAN }}
+            style={styles.stickerImage}
+          />
+        </View>
+      </Animated.View>
+
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Text style={styles.pageLabel}>Our Memories</Text>
         <Text style={styles.instruction}>Tap each card to explore</Text>
-
-        {/* Batman Sticker */}
-        <View style={styles.stickerContainer}>
-          <Image
-            source={{ uri: STICKER_BATMAN }}
-            style={styles.sticker}
-          />
-        </View>
 
         <View style={styles.cardsContainer}>
           {MEMORIES.map((memory, index) => {
@@ -246,6 +278,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
+    paddingTop: 80,
     alignItems: 'center',
   },
   pageLabel: {
@@ -399,16 +432,25 @@ const styles = StyleSheet.create({
   },
   stickerContainer: {
     position: 'absolute',
-    top: 5,
-    right: 10,
+    top: 50,
+    right: 5,
     zIndex: 10,
-    transform: [{ rotate: '8deg' }],
   },
-  sticker: {
+  heartStickerWrapper: {
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heartBg: {
+    position: 'absolute',
+  },
+  stickerImage: {
     width: 70,
     height: 70,
     borderRadius: 35,
+    marginTop: 12,
     borderWidth: 3,
-    borderColor: '#333',
+    borderColor: '#FFFFFF',
   },
 });
