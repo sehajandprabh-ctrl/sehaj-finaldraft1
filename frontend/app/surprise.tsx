@@ -346,4 +346,19 @@ const styles = StyleSheet.create({
   messageHeart: {
     marginTop: 16,
   },
+  continueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF6B9D',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginTop: 20,
+    gap: 8,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
