@@ -18,76 +18,58 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAudio } from './_layout';
 
 const { width } = Dimensions.get('window');
-const CELL_SIZE = Math.min((width - 60) / 9, 38);
+const CELL_SIZE = Math.min((width - 48) / 10, 34);
 
-// Crossword grid - 9 columns x 11 rows
-// null = black cell, number = starting cell for a word, '' = white cell
-const GRID_TEMPLATE = [
-  [null, 1,    null, null, null, null, 2,    null, null], // Row 0
-  [null, '',   null, null, null, null, '',   null, null], // Row 1
-  [3,    '',   '',   '',   '',   '',   '',   null, null], // Row 2 - BABYGRL (7)
-  [null, '',   null, null, null, null, '',   null, null], // Row 3
-  [4,    '',   '',   '',   '',   '',   '',   '',   '', ], // Row 4 - USFOREVER (9)
-  [null, '',   null, null, null, 6,    '',   null, '', ], // Row 5
-  [5,    '',   '',   '',   '',   '',   '',   null, '', ], // Row 6 - FOREVER (7)
-  [null, null, null, null, null, '',   null, null, '', ], // Row 7
-  [7,    '',   '',   '',   '',   '',   '',   8,    '', ], // Row 8 - LOVERAJ (7) + 8 start
-  [null, null, null, null, null, '',   null, '',   '', ], // Row 9
-  [10,   '',   '',   '',   '',   '',   '',   '',   null], // Row 10 - FOREVER (7)
+// Grid: 10 columns x 12 rows
+// null = black cell, number or '' = white cell
+// Design the grid to fit the words with intersections
+
+const GRID_STRUCTURE = [
+  //0    1    2    3    4    5    6    7    8    9
+  [null, null, null, 1,   null, null, null, null, null, null], // 0
+  [null, null, null, '',  null, null, null, null, null, null], // 1
+  [null, null, null, '',  null, null, 2,   null, null, null], // 2
+  [3,    '',   '',  '',   '',   '',   '',   '',   null, null], // 3 - SOULMATE
+  [null, null, null, '',  null, null, '',  null, null, null], // 4
+  [null, 4,    '',   '',  '',   '',   '',   null, null, null], // 5 - PRABH (starts at 1)
+  [null, null, null, null, null, 5,   '',  null, null, null], // 6
+  [6,    '',   '',   '',  '',   '',   '',   '',   null, null], // 7 - TOGETHER
+  [null, null, null, null, null, '',  null, null, null, null], // 8
+  [null, 7,    '',   '',  '',   '',   '',   null, null, null], // 9 - MYGIRL
+  [null, null, null, null, null, '',  null, null, null, null], // 10
+  [null, 8,    '',   '',  '',   '',   null, null, null, null], // 11 - SEHAJ
 ];
 
-// Clues with answers
-const CLUES = {
-  across: [
-    { num: 3, clue: "im your _______", answer: "BABYGRL", row: 2, col: 1, length: 7 },
-    { num: 4, clue: "me and you _________", answer: "USFOREVER", row: 4, col: 0, length: 9 },
-    { num: 5, clue: "_______ and always", answer: "FOREVER", row: 6, col: 0, length: 7 },
-    { num: 7, clue: "my name is _______", answer: "LOVERAJ", row: 8, col: 0, length: 7 },
-    { num: 10, clue: "your my _______", answer: "FOREVER", row: 10, col: 0, length: 7 },
-  ],
-  down: [
-    { num: 1, clue: "home, kids, ______", answer: "FUTURE", row: 0, col: 1, length: 6 },
-    { num: 2, clue: "your my _______", answer: "EVERYTHING", row: 0, col: 6, length: 10 },
-    { num: 6, clue: "you make me feel like ___", answer: "HOME", row: 5, col: 5, length: 4 },
-    { num: 8, clue: "love you _____", answer: "ALWAYS", row: 8, col: 7, length: 6 },
-  ],
-};
-
-// Build the actual grid data structure
-const buildGrid = () => {
-  const grid: (string | null)[][] = [];
-  for (let r = 0; r < 11; r++) {
-    grid[r] = [];
-    for (let c = 0; c < 9; c++) {
-      const cell = GRID_TEMPLATE[r]?.[c];
-      if (cell === null) {
-        grid[r][c] = null; // Black cell
-      } else {
-        grid[r][c] = ''; // White cell (empty)
-      }
-    }
-  }
-  return grid;
-};
-
-// Get cell number if it's a starting cell
-const getCellNumber = (row: number, col: number): number | null => {
-  const cell = GRID_TEMPLATE[row]?.[col];
-  if (typeof cell === 'number') {
-    return cell;
-  }
-  return null;
+// Answers
+const ANSWERS = {
+  across: {
+    3: { word: 'SOULMATE', row: 3, col: 0, hint: "im your ________" },
+    4: { word: 'PRABH', row: 5, col: 1, hint: "my name is _____" },
+    6: { word: 'TOGETHER', row: 7, col: 0, hint: "forever and _______" },
+    7: { word: 'MYGIRL', row: 9, col: 1, hint: "your my ______" },
+    8: { word: 'SEHAJ', row: 11, col: 1, hint: "your name is _____" },
+  },
+  down: {
+    1: { word: 'OURS', row: 0, col: 3, hint: "____ home, ____ kids, ____ future" },
+    2: { word: 'HOME', row: 2, col: 6, hint: "you make me feel like ____" },
+    5: { word: 'ALWAYS', row: 6, col: 5, hint: "love you ______" },
+  },
 };
 
 export default function Crossword() {
   const router = useRouter();
-  const [grid, setGrid] = useState<(string | null)[][]>(buildGrid());
+  const [grid, setGrid] = useState<(string | null)[][]>(() => {
+    // Initialize grid with empty strings for white cells
+    return GRID_STRUCTURE.map(row => 
+      row.map(cell => cell === null ? null : '')
+    );
+  });
   const [selectedCell, setSelectedCell] = useState<{row: number, col: number} | null>(null);
   const [direction, setDirection] = useState<'across' | 'down'>('across');
-  const [showSolution, setShowSolution] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const solutionAnim = useRef(new Animated.Value(0)).current;
+  const completeAnim = useRef(new Animated.Value(0)).current;
+  const inputRefs = useRef<{[key: string]: TextInput | null}>({});
   const { playClick, playSuccess, playComplete } = useAudio();
 
   useEffect(() => {
@@ -98,42 +80,95 @@ export default function Crossword() {
     }).start();
   }, []);
 
-  // Check if puzzle is complete
-  const checkComplete = (newGrid: (string | null)[][]) => {
-    let allCorrect = true;
-    
-    // Check across answers
-    for (const clue of CLUES.across) {
+  const getCellNumber = (row: number, col: number): number | null => {
+    const cell = GRID_STRUCTURE[row]?.[col];
+    return typeof cell === 'number' ? cell : null;
+  };
+
+  const checkCompletion = (newGrid: (string | null)[][]) => {
+    // Check all across words
+    for (const [num, data] of Object.entries(ANSWERS.across)) {
       let word = '';
-      for (let i = 0; i < clue.length; i++) {
-        const cell = newGrid[clue.row]?.[clue.col + i];
-        word += cell || '';
+      for (let i = 0; i < data.word.length; i++) {
+        word += newGrid[data.row]?.[data.col + i] || '';
       }
-      if (word.toUpperCase() !== clue.answer) {
-        allCorrect = false;
-        break;
+      if (word.toUpperCase() !== data.word) return false;
+    }
+    
+    // Check all down words
+    for (const [num, data] of Object.entries(ANSWERS.down)) {
+      let word = '';
+      for (let i = 0; i < data.word.length; i++) {
+        word += newGrid[data.row + i]?.[data.col] || '';
+      }
+      if (word.toUpperCase() !== data.word) return false;
+    }
+    
+    return true;
+  };
+
+  const handleCellPress = (row: number, col: number) => {
+    if (grid[row]?.[col] === null) return;
+    
+    playClick();
+    
+    if (selectedCell?.row === row && selectedCell?.col === col) {
+      setDirection(d => d === 'across' ? 'down' : 'across');
+    } else {
+      setSelectedCell({ row, col });
+    }
+    
+    // Focus the input
+    const key = `${row}-${col}`;
+    inputRefs.current[key]?.focus();
+  };
+
+  const handleInput = (text: string, row: number, col: number) => {
+    if (grid[row]?.[col] === null) return;
+    
+    const letter = text.toUpperCase().slice(-1);
+    const newGrid = grid.map(r => [...r]);
+    newGrid[row][col] = letter;
+    setGrid(newGrid);
+    
+    if (letter) {
+      playSuccess();
+      
+      // Move to next cell
+      let nextRow = row;
+      let nextCol = col;
+      
+      if (direction === 'across') {
+        nextCol = col + 1;
+        while (nextCol < 10 && grid[row]?.[nextCol] === null) {
+          nextCol++;
+        }
+        if (nextCol >= 10 || grid[row]?.[nextCol] === null) {
+          nextCol = col;
+        }
+      } else {
+        nextRow = row + 1;
+        while (nextRow < 12 && grid[nextRow]?.[col] === null) {
+          nextRow++;
+        }
+        if (nextRow >= 12 || grid[nextRow]?.[col] === null) {
+          nextRow = row;
+        }
+      }
+      
+      if (nextRow !== row || nextCol !== col) {
+        setSelectedCell({ row: nextRow, col: nextCol });
+        const key = `${nextRow}-${nextCol}`;
+        setTimeout(() => inputRefs.current[key]?.focus(), 50);
       }
     }
     
-    // Check down answers
-    if (allCorrect) {
-      for (const clue of CLUES.down) {
-        let word = '';
-        for (let i = 0; i < clue.length; i++) {
-          const cell = newGrid[clue.row + i]?.[clue.col];
-          word += cell || '';
-        }
-        if (word.toUpperCase() !== clue.answer) {
-          allCorrect = false;
-          break;
-        }
-      }
-    }
-    
-    if (allCorrect) {
+    // Check completion
+    if (checkCompletion(newGrid)) {
       setIsComplete(true);
       playComplete();
-      Animated.spring(solutionAnim, {
+      Keyboard.dismiss();
+      Animated.spring(completeAnim, {
         toValue: 1,
         tension: 50,
         friction: 7,
@@ -142,41 +177,30 @@ export default function Crossword() {
     }
   };
 
-  const handleCellPress = (row: number, col: number) => {
-    if (grid[row]?.[col] === null) return; // Can't select black cells
-    
-    playClick();
-    
-    if (selectedCell?.row === row && selectedCell?.col === col) {
-      // Toggle direction if same cell
-      setDirection(d => d === 'across' ? 'down' : 'across');
-    } else {
-      setSelectedCell({ row, col });
-    }
-  };
-
-  const handleInput = (text: string, row: number, col: number) => {
-    if (grid[row]?.[col] === null) return;
-    
-    const newGrid = [...grid.map(r => [...r])];
-    newGrid[row][col] = text.toUpperCase().slice(-1);
-    setGrid(newGrid);
-    
-    if (text) {
-      playSuccess();
-      // Move to next cell
+  const handleKeyPress = (e: any, row: number, col: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !grid[row]?.[col]) {
+      // Move back on backspace if cell is empty
+      let prevRow = row;
+      let prevCol = col;
+      
       if (direction === 'across') {
-        if (col < 8 && grid[row]?.[col + 1] !== null) {
-          setSelectedCell({ row, col: col + 1 });
+        prevCol = col - 1;
+        while (prevCol >= 0 && grid[row]?.[prevCol] === null) {
+          prevCol--;
         }
       } else {
-        if (row < 10 && grid[row + 1]?.[col] !== null) {
-          setSelectedCell({ row: row + 1, col });
+        prevRow = row - 1;
+        while (prevRow >= 0 && grid[prevRow]?.[col] === null) {
+          prevRow--;
         }
       }
+      
+      if (prevRow >= 0 && prevCol >= 0 && grid[prevRow]?.[prevCol] !== null) {
+        setSelectedCell({ row: prevRow, col: prevCol });
+        const key = `${prevRow}-${prevCol}`;
+        setTimeout(() => inputRefs.current[key]?.focus(), 50);
+      }
     }
-    
-    checkComplete(newGrid);
   };
 
   const renderCell = (row: number, col: number) => {
@@ -186,9 +210,7 @@ export default function Crossword() {
     const isBlack = cellValue === null;
     
     if (isBlack) {
-      return (
-        <View key={`${row}-${col}`} style={[styles.cell, styles.blackCell]} />
-      );
+      return <View key={`${row}-${col}`} style={[styles.cell, styles.blackCell]} />;
     }
     
     return (
@@ -202,19 +224,21 @@ export default function Crossword() {
         onPress={() => handleCellPress(row, col)}
         activeOpacity={0.7}
       >
-        {cellNumber && (
+        {cellNumber !== null && (
           <Text style={styles.cellNumber}>{cellNumber}</Text>
         )}
         <TextInput
+          ref={(ref) => { inputRefs.current[`${row}-${col}`] = ref; }}
           style={styles.cellInput}
           value={cellValue || ''}
           onChangeText={(text) => handleInput(text, row, col)}
+          onKeyPress={(e) => handleKeyPress(e, row, col)}
           maxLength={1}
           autoCapitalize="characters"
-          onFocus={() => {
-            setSelectedCell({ row, col });
-          }}
+          autoCorrect={false}
+          onFocus={() => setSelectedCell({ row, col })}
           editable={!isComplete}
+          selectTextOnFocus
         />
       </TouchableOpacity>
     );
@@ -232,76 +256,81 @@ export default function Crossword() {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-            <Text style={styles.pageLabel}>Crossword Puzzle</Text>
-            <Text style={styles.subtitle}>Fill in our love story</Text>
+            <Text style={styles.pageLabel}>Our Love Crossword</Text>
+            <Text style={styles.subtitle}>Fill in our story 💕</Text>
 
-            {/* Crossword Grid */}
-            <View style={styles.gridContainer}>
-              {Array.from({ length: 11 }).map((_, row) => (
-                <View key={row} style={styles.gridRow}>
-                  {Array.from({ length: 9 }).map((_, col) => renderCell(row, col))}
-                </View>
-              ))}
-            </View>
-
-            {/* Direction Indicator */}
+            {/* Direction Toggle */}
             <View style={styles.directionContainer}>
               <TouchableOpacity
                 style={[styles.directionBtn, direction === 'across' && styles.directionBtnActive]}
-                onPress={() => setDirection('across')}
+                onPress={() => { playClick(); setDirection('across'); }}
               >
                 <Ionicons name="arrow-forward" size={16} color={direction === 'across' ? '#FFF' : '#FF6B9D'} />
                 <Text style={[styles.directionText, direction === 'across' && styles.directionTextActive]}>Across</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.directionBtn, direction === 'down' && styles.directionBtnActive]}
-                onPress={() => setDirection('down')}
+                onPress={() => { playClick(); setDirection('down'); }}
               >
                 <Ionicons name="arrow-down" size={16} color={direction === 'down' ? '#FFF' : '#FF6B9D'} />
                 <Text style={[styles.directionText, direction === 'down' && styles.directionTextActive]}>Down</Text>
               </TouchableOpacity>
             </View>
 
+            {/* Crossword Grid */}
+            <View style={styles.gridContainer}>
+              {GRID_STRUCTURE.map((row, rowIndex) => (
+                <View key={rowIndex} style={styles.gridRow}>
+                  {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
+                </View>
+              ))}
+            </View>
+
             {/* Clues */}
             <View style={styles.cluesContainer}>
               <View style={styles.clueSection}>
-                <Text style={styles.clueHeader}>Across</Text>
-                {CLUES.across.map((clue) => (
-                  <Text key={clue.num} style={styles.clueText}>
-                    {clue.num}. {clue.clue}
+                <Text style={styles.clueHeader}>
+                  <Ionicons name="arrow-forward" size={14} color="#FF6B9D" /> Across
+                </Text>
+                {Object.entries(ANSWERS.across).map(([num, data]) => (
+                  <Text key={num} style={styles.clueText}>
+                    <Text style={styles.clueNum}>{num}.</Text> {data.hint}
                   </Text>
                 ))}
               </View>
               
               <View style={styles.clueSection}>
-                <Text style={styles.clueHeader}>Down</Text>
-                {CLUES.down.map((clue) => (
-                  <Text key={clue.num} style={styles.clueText}>
-                    {clue.num}. {clue.clue}
+                <Text style={styles.clueHeader}>
+                  <Ionicons name="arrow-down" size={14} color="#9B59B6" /> Down
+                </Text>
+                {Object.entries(ANSWERS.down).map(([num, data]) => (
+                  <Text key={num} style={styles.clueText}>
+                    <Text style={styles.clueNum}>{num}.</Text> {data.hint}
                   </Text>
                 ))}
               </View>
             </View>
 
-            {/* Completion Message */}
+            {/* Completion */}
             {isComplete && (
               <Animated.View
                 style={[
-                  styles.completionContainer,
+                  styles.completeContainer,
                   {
-                    opacity: solutionAnim,
-                    transform: [{ scale: solutionAnim }],
+                    opacity: completeAnim,
+                    transform: [{ scale: completeAnim }],
                   },
                 ]}
               >
-                <Ionicons name="heart" size={40} color="#FF6B9D" />
-                <Text style={styles.completionText}>
-                  Perfect! You know our story by heart! 💕
+                <Ionicons name="heart" size={50} color="#FF6B9D" />
+                <Text style={styles.completeTitle}>Perfect! 🎉</Text>
+                <Text style={styles.completeText}>
+                  You know our love story by heart!
                 </Text>
                 <TouchableOpacity
                   style={styles.continueButton}
                   onPress={() => {
-                    playSuccess();
+                    playComplete();
                     router.push('/poems');
                   }}
                   activeOpacity={0.8}
@@ -329,6 +358,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 16,
+    paddingBottom: 40,
   },
   content: {
     alignItems: 'center',
@@ -338,23 +368,49 @@ const styles = StyleSheet.create({
     color: '#9B7FA7',
     letterSpacing: 3,
     textTransform: 'uppercase',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#6B5B6B',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  directionContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  directionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#FF6B9D',
+  },
+  directionBtnActive: {
+    backgroundColor: '#FF6B9D',
+  },
+  directionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FF6B9D',
+  },
+  directionTextActive: {
+    color: '#FFFFFF',
   },
   gridContainer: {
-    backgroundColor: '#333',
-    padding: 2,
+    backgroundColor: '#4A1942',
+    padding: 3,
     borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 6,
   },
   gridRow: {
     flexDirection: 'row',
@@ -365,13 +421,14 @@ const styles = StyleSheet.create({
     margin: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
   blackCell: {
-    backgroundColor: '#333',
+    backgroundColor: '#4A1942',
   },
   whiteCell: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   selectedCell: {
     backgroundColor: '#FFE4EC',
@@ -383,54 +440,28 @@ const styles = StyleSheet.create({
     top: 1,
     left: 2,
     fontSize: 8,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: '700',
+    color: '#9B59B6',
   },
   cellInput: {
     width: '100%',
     height: '100%',
     textAlign: 'center',
-    fontSize: CELL_SIZE * 0.5,
+    fontSize: CELL_SIZE * 0.55,
     fontWeight: '700',
     color: '#4A1942',
     padding: 0,
-  },
-  directionContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  directionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#FFE4EC',
-    borderWidth: 2,
-    borderColor: '#FF6B9D',
-  },
-  directionBtnActive: {
-    backgroundColor: '#FF6B9D',
-  },
-  directionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FF6B9D',
-  },
-  directionTextActive: {
-    color: '#FFFFFF',
+    marginTop: 4,
   },
   cluesContainer: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -438,36 +469,46 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   clueHeader: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#FF6B9D',
-    marginBottom: 8,
+    color: '#4A1942',
+    marginBottom: 10,
   },
   clueText: {
     fontSize: 14,
-    color: '#4A1942',
-    marginBottom: 6,
+    color: '#5A4A5A',
+    marginBottom: 8,
     lineHeight: 20,
+    paddingLeft: 8,
   },
-  completionContainer: {
+  clueNum: {
+    fontWeight: '700',
+    color: '#FF6B9D',
+  },
+  completeContainer: {
     marginTop: 24,
-    padding: 24,
+    padding: 28,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 28,
     alignItems: 'center',
     shadowColor: '#FF6B9D',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
     width: '100%',
   },
-  completionText: {
-    fontSize: 18,
+  completeTitle: {
+    fontSize: 28,
     fontWeight: '600',
-    color: '#4A1942',
+    color: '#FF6B9D',
+    marginTop: 12,
+  },
+  completeText: {
+    fontSize: 16,
+    color: '#5A4A5A',
     textAlign: 'center',
-    marginVertical: 16,
+    marginVertical: 12,
   },
   continueButton: {
     flexDirection: 'row',
@@ -477,6 +518,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 25,
     gap: 8,
+    marginTop: 8,
   },
   continueButtonText: {
     color: '#FFFFFF',
