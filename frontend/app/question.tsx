@@ -40,6 +40,9 @@ export default function Question() {
       useNativeDriver: true,
     }).start();
 
+    // Play drumroll at the start
+    playDrumroll();
+
     // Animate lines sequentially
     const animateLines = async () => {
       for (let i = 0; i < REVEAL_LINES.length; i++) {
