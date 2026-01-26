@@ -325,4 +325,17 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
   },
+  skipButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  skipButtonText: {
+    fontSize: 14,
+    color: '#9B7FA7',
+    fontWeight: '500',
+  },
 });
