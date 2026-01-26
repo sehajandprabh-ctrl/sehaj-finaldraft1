@@ -8,6 +8,8 @@ const SOUNDS = {
   success: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3', // Success chime
   magic: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', // Magic sparkle
   complete: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3', // Level complete
+  drumroll: 'https://assets.mixkit.co/active_storage/sfx/2198/2198-preview.mp3', // Drumroll
+  kiss: 'https://assets.mixkit.co/active_storage/sfx/239/239-preview.mp3', // Kiss sound
 };
 
 class SoundManager {
