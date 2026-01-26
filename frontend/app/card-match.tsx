@@ -146,6 +146,15 @@ export default function CardMatch() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => { playClick(); router.back(); }}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
+      </TouchableOpacity>
+
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Text style={styles.title}>Match the Pairs 💕</Text>
         <Text style={styles.subtitle}>Find each photo with its caption!</Text>
