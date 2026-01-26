@@ -20,7 +20,7 @@ import { useUser, useAudio } from './_layout';
 export default function Personalization() {
   const router = useRouter();
   const { setUserName } = useUser();
-  const { playPop, playClick } = useAudio();
+  const { playKiss, playClick } = useAudio();
   const [name, setName] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -42,7 +42,7 @@ export default function Personalization() {
 
   const handleContinue = () => {
     Keyboard.dismiss();
-    playPop();
+    playKiss();
     const finalName = name.trim() || 'Sehaj';
     setUserName(finalName);
     router.push('/origin');
