@@ -110,7 +110,7 @@ export default function Memories() {
   };
 
   const handleCloseMemory = () => {
-    playPop();
+    playClick();
     if (selectedMemory) {
       setViewedMemories((prev) => new Set([...prev, selectedMemory.id]));
     }
