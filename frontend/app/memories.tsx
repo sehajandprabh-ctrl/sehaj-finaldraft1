@@ -61,6 +61,7 @@ export default function Memories() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const cardAnims = useRef(MEMORIES.map(() => new Animated.Value(0))).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
+  const { playPop, playClick, playComplete } = useAudio();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
