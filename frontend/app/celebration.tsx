@@ -285,6 +285,19 @@ export default function Celebration() {
               </Text>
             </Animated.View>
           )}
+
+          {/* One More Thing Button */}
+          <TouchableOpacity
+            style={styles.surpriseButton}
+            onPress={() => {
+              playPop();
+              router.push('/surprise');
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="gift" size={20} color="#FFFFFF" />
+            <Text style={styles.surpriseButtonText}>One more thing...</Text>
+          </TouchableOpacity>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
