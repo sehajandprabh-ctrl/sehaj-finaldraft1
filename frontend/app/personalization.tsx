@@ -101,6 +101,19 @@ export default function Personalization() {
                 <Text style={styles.buttonText}>Continue</Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.skipButton}
+                onPress={() => {
+                  playClick();
+                  setUserName('Sehaj');
+                  router.push('/crossword');
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.skipButtonText}>Skip</Text>
+                <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
+              </TouchableOpacity>
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
