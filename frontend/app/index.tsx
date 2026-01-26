@@ -88,6 +88,21 @@ export default function EntryGate() {
           ))}
         </View>
 
+        {/* Photo Sticker */}
+        <Animated.View
+          style={[
+            styles.stickerContainer,
+            {
+              transform: [{ translateY: heartTranslateY }, { rotate: '-8deg' }],
+            },
+          ]}
+        >
+          <Image
+            source={{ uri: STICKER_GOLD_DRESS }}
+            style={styles.sticker}
+          />
+        </Animated.View>
+
         <Animated.View
           style={[
             styles.mainContent,
