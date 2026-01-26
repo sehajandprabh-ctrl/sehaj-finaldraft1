@@ -12,9 +12,9 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-const STICKER_GOLD_DRESS = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/grh04hmp_IMG_5616.jpeg';
-
 const { width, height } = Dimensions.get('window');
+
+const STICKER_GOLD_DRESS = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/grh04hmp_IMG_5616.jpeg';
 
 export default function EntryGate() {
   const router = useRouter();
@@ -93,19 +93,16 @@ export default function EntryGate() {
           style={[
             styles.stickerContainer,
             {
-              transform: [{ translateY: heartTranslateY }, { rotate: '-8deg' }],
+              transform: [{ translateY: heartTranslateY }, { rotate: '-12deg' }],
             },
           ]}
         >
-          <View style={styles.heartSticker}>
-            <View style={styles.heartMain}>
-              <Image
-                source={{ uri: STICKER_GOLD_DRESS }}
-                style={styles.stickerImage}
-              />
-            </View>
-            <View style={styles.heartLeft} />
-            <View style={styles.heartRight} />
+          <View style={styles.heartStickerWrapper}>
+            <Ionicons name="heart" size={130} color="#FF6B9D" style={styles.heartBg} />
+            <Image
+              source={{ uri: STICKER_GOLD_DRESS }}
+              style={styles.stickerImage}
+            />
           </View>
         </Animated.View>
 
@@ -210,57 +207,25 @@ const styles = StyleSheet.create({
   },
   stickerContainer: {
     position: 'absolute',
-    top: 50,
-    right: 15,
+    top: 40,
+    right: 5,
     zIndex: 10,
   },
-  heartSticker: {
-    width: 120,
-    height: 120,
-    position: 'relative',
+  heartStickerWrapper: {
+    width: 130,
+    height: 130,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  heartMain: {
-    width: 85,
-    height: 85,
-    backgroundColor: '#FF6B9D',
-    transform: [{ rotate: '-45deg' }],
+  heartBg: {
     position: 'absolute',
-    top: 35,
-    left: 17,
-    overflow: 'hidden',
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
   },
   stickerImage: {
-    width: 120,
-    height: 120,
-    transform: [{ rotate: '45deg' }],
-    position: 'absolute',
-    top: -20,
-    left: -20,
-  },
-  heartLeft: {
-    width: 85,
-    height: 85,
-    backgroundColor: '#FF6B9D',
-    borderRadius: 50,
-    position: 'absolute',
-    top: 5,
-    left: -8,
-    borderWidth: 4,
+    width: 75,
+    height: 75,
+    borderRadius: 40,
+    marginTop: 15,
+    borderWidth: 3,
     borderColor: '#FFFFFF',
-    overflow: 'hidden',
-  },
-  heartRight: {
-    width: 85,
-    height: 85,
-    backgroundColor: '#FF6B9D',
-    borderRadius: 50,
-    position: 'absolute',
-    top: -25,
-    left: 22,
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
-    overflow: 'hidden',
   },
 });
