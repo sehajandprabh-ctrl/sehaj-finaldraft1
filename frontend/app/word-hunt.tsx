@@ -351,6 +351,21 @@ export default function WordHunt() {
             Drag across letters to select words 💕
           </Text>
 
+          {/* Skip Button */}
+          {!allWordsFound && (
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={() => {
+                playClick();
+                router.push('/crossword');
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.skipButtonText}>Skip</Text>
+              <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
+            </TouchableOpacity>
+          )}
+
           {/* Word List */}
           <View style={styles.wordListContainer}>
             <Text style={styles.wordListTitle}>Words to find:</Text>
