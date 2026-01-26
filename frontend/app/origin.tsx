@@ -143,7 +143,10 @@ export default function OriginStory() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push('/early-feelings')}
+            onPress={() => {
+              playPop();
+              router.push('/early-feelings');
+            }}
             activeOpacity={0.8}
           >
             <Text style={styles.buttonText}>Next</Text>
