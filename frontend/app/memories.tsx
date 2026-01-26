@@ -397,4 +397,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  stickerContainer: {
+    position: 'absolute',
+    top: 5,
+    right: 10,
+    zIndex: 10,
+    transform: [{ rotate: '8deg' }],
+  },
+  sticker: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
+    borderColor: '#333',
+  },
 });
