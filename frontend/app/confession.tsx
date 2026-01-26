@@ -128,13 +128,25 @@ export default function Confession() {
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              playPop();
+              playClick();
               router.push('/question');
             }}
             activeOpacity={0.8}
           >
             <Text style={styles.buttonText}>One last thing</Text>
             <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => {
+              playClick();
+              router.push('/question');
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.skipButtonText}>Skip</Text>
+            <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
