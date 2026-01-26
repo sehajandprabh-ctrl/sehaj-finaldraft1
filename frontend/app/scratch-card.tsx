@@ -80,6 +80,15 @@ export default function ScratchCard() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => { playClick(); router.back(); }}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
+      </TouchableOpacity>
+
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Ionicons name="gift" size={50} color="#FF6B9D" />
         <Text style={styles.title}>Scratch to Reveal 💕</Text>
