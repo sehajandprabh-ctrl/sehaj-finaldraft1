@@ -206,6 +206,17 @@ export default function EntryGate() {
                 <Ionicons name="heart" size={18} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>
+
+            {/* Silly Crybaby Button */}
+            <TouchableOpacity
+              onPress={handleSillyCrybaby}
+              activeOpacity={0.7}
+              style={styles.crybabybuttonWrapper}
+            >
+              <Text style={[styles.crybabyButtonText, { color: colors.textSecondary }]}>
+                when you're being my silly crybaby 💕
+              </Text>
+            </TouchableOpacity>
           </Animated.View>
         </View>
       </SafeAreaView>
