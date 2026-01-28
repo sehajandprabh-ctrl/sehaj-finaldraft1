@@ -213,10 +213,6 @@ export default function EntryGate() {
               },
             ]}
           >
-            <Text style={[styles.smallText, { color: colors.textSecondary }]}>
-              A small journey through us
-            </Text>
-
             {/* Main Heart with Glow */}
             <Animated.View
               style={[
