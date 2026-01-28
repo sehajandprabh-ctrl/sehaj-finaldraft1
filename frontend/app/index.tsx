@@ -101,7 +101,7 @@ export default function EntryGate() {
         }),
       ])
     ).start();
-  }, []);
+  }, [checkingIntro]);
 
   const heartTranslateY = heartAnim.interpolate({
     inputRange: [0, 1],
