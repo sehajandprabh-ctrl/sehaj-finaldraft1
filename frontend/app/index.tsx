@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAudio } from './_layout';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemedBackground, ThemedButton, ThemedCard } from '../src/components/themed';
+import { UserSetupModal, PresenceCheckModal, PresenceDisplay } from '../src/components/PresenceModals';
 import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
@@ -26,32 +27,65 @@ export default function EntryGate() {
   const router = useRouter();
   const { playKiss, playClick } = useAudio();
   const { colors, isDark } = useTheme();
+  
+  // State management
   const [checkingIntro, setCheckingIntro] = useState(true);
+  const [showUserSetup, setShowUserSetup] = useState(false);
+  const [showPresenceCheck, setShowPresenceCheck] = useState(false);
+  const [currentUser, setCurrentUser] = useState<'prabh' | 'sehaj' | null>(null);
+  const [presenceKey, setPresenceKey] = useState(0); // To force refresh presence display
+  
+  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const heartAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    // Check if first intro has been seen
-    const checkFirstIntro = async () => {
-      try {
-        const introSeen = await AsyncStorage.getItem('first_intro_seen');
-        if (!introSeen) {
-          // First time user - show intro
-          router.replace('/first-intro');
-          return;
-        }
-      } catch (error) {
-        console.log('Error checking intro:', error);
-      }
-      setCheckingIntro(false);
-    };
-    checkFirstIntro();
+    initializeApp();
   }, []);
 
+  const initializeApp = async () => {
+    try {
+      // Check if first intro has been seen
+      const introSeen = await AsyncStorage.getItem('first_intro_seen');
+      if (!introSeen) {
+        router.replace('/first-intro');
+        return;
+      }
+
+      // Check if user has been set up
+      const savedUser = await AsyncStorage.getItem('currentUser');
+      if (!savedUser) {
+        setCheckingIntro(false);
+        setShowUserSetup(true);
+        return;
+      }
+
+      setCurrentUser(savedUser as 'prabh' | 'sehaj');
+      setCheckingIntro(false);
+      
+      // Show presence check modal
+      setShowPresenceCheck(true);
+    } catch (error) {
+      console.log('Error initializing app:', error);
+      setCheckingIntro(false);
+    }
+  };
+
+  const handleUserSetupComplete = (user: 'prabh' | 'sehaj') => {
+    setCurrentUser(user);
+    setShowUserSetup(false);
+    setShowPresenceCheck(true);
+  };
+
+  const handlePresenceComplete = (shared: boolean) => {
+    setShowPresenceCheck(false);
+    setPresenceKey(prev => prev + 1); // Refresh presence display
+  };
+
   useEffect(() => {
-    if (checkingIntro) return;
+    if (checkingIntro || showUserSetup || showPresenceCheck) return;
     
     Animated.sequence([
       Animated.delay(300),
@@ -101,7 +135,7 @@ export default function EntryGate() {
         }),
       ])
     ).start();
-  }, [checkingIntro]);
+  }, [checkingIntro, showUserSetup, showPresenceCheck]);
 
   const heartTranslateY = heartAnim.interpolate({
     inputRange: [0, 1],
@@ -130,6 +164,21 @@ export default function EntryGate() {
   return (
     <ThemedBackground showFloatingElements={true}>
       <SafeAreaView style={styles.container}>
+        {/* User Setup Modal - First time only */}
+        <UserSetupModal
+          visible={showUserSetup}
+          onComplete={handleUserSetupComplete}
+        />
+
+        {/* Presence Check Modal - Every app launch */}
+        {currentUser && (
+          <PresenceCheckModal
+            visible={showPresenceCheck}
+            currentUser={currentUser}
+            onComplete={handlePresenceComplete}
+          />
+        )}
+
         <View style={styles.content}>
           {/* Photo Sticker - Heart Shaped */}
           <Animated.View
@@ -190,6 +239,9 @@ export default function EntryGate() {
               Made with love
             </Text>
 
+            {/* Presence Display Section */}
+            <PresenceDisplay key={presenceKey} style={styles.presenceSection} />
+
             {/* Premium Gradient Button */}
             <TouchableOpacity
               onPress={handleBegin}
@@ -207,15 +259,20 @@ export default function EntryGate() {
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Silly Crybaby Button */}
+            {/* Or Separator */}
+            <Text style={[styles.orText, { color: colors.textMuted }]}>or</Text>
+
+            {/* Silly Crybaby Button - Now styled as a button */}
             <TouchableOpacity
               onPress={handleSillyCrybaby}
-              activeOpacity={0.7}
-              style={styles.crybabybuttonWrapper}
+              activeOpacity={0.8}
+              style={[styles.crybabyButton, { backgroundColor: colors.glass, borderColor: colors.secondary }]}
             >
-              <Text style={[styles.crybabyButtonText, { color: colors.textSecondary }]}>
-                when you're being my silly crybaby 💕
+              <Ionicons name="heart-half" size={18} color={colors.secondary} />
+              <Text style={[styles.crybabyButtonText, { color: colors.secondary }]}>
+                when you're being my silly crybaby
               </Text>
+              <Text style={styles.crybabyEmoji}>💕</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -236,7 +293,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    paddingBottom: 120,
+    paddingBottom: 100,
   },
   mainContent: {
     alignItems: 'center',
@@ -267,9 +324,13 @@ const styles = StyleSheet.create({
   },
   subText: {
     fontSize: 16,
-    marginBottom: 50,
+    marginBottom: 16,
     letterSpacing: 1.5,
     fontStyle: 'italic',
+  },
+  presenceSection: {
+    marginBottom: 20,
+    width: width - 80,
   },
   buttonWrapper: {
     marginTop: 10,
@@ -292,15 +353,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 3,
   },
-  crybabybuttonWrapper: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+  orText: {
+    fontSize: 14,
+    marginVertical: 12,
+    fontStyle: 'italic',
+  },
+  crybabyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 25,
+    borderWidth: 1.5,
+    gap: 8,
   },
   crybabyButtonText: {
     fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontWeight: '500',
+  },
+  crybabyEmoji: {
+    fontSize: 16,
   },
   stickerContainer: {
     position: 'absolute',
