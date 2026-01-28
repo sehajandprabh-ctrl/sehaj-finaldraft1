@@ -10,7 +10,11 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useUser, useAudio } from './_layout';
+import { useTheme } from './theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from './components/themed';
+import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
 
@@ -23,8 +27,8 @@ const REVEAL_LINES = [
 export default function Question() {
   const router = useRouter();
   const { userName } = useUser();
+  const { colors, isDark } = useTheme();
   const { playMagic, playComplete, playDrumroll, playClick } = useAudio();
-  const [currentLine, setCurrentLine] = useState(0);
   const [showQuestion, setShowQuestion] = useState(false);
   const [showButtons, setShowButtons] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -40,10 +44,8 @@ export default function Question() {
       useNativeDriver: true,
     }).start();
 
-    // Play drumroll at the start
     playDrumroll();
 
-    // Animate lines sequentially
     const animateLines = async () => {
       for (let i = 0; i < REVEAL_LINES.length; i++) {
         await new Promise<void>((resolve) => {
@@ -57,7 +59,6 @@ export default function Question() {
         });
       }
 
-      // After all lines, show the question
       setTimeout(() => {
         setShowQuestion(true);
         Animated.spring(questionAnim, {
@@ -67,7 +68,6 @@ export default function Question() {
           useNativeDriver: true,
         }).start();
 
-        // Show buttons after question
         setTimeout(() => {
           setShowButtons(true);
           Animated.spring(buttonsAnim, {
@@ -82,7 +82,6 @@ export default function Question() {
 
     animateLines();
 
-    // Floating hearts animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(heartFloat, {
@@ -100,6 +99,7 @@ export default function Question() {
   }, []);
 
   const handleYes = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     playComplete();
     router.push('/celebration');
   };
@@ -110,154 +110,160 @@ export default function Question() {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => { playClick(); router.back(); }}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
-      </TouchableOpacity>
+    <ThemedBackground>
+      <SafeAreaView style={styles.container}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { playClick(); router.back(); }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
 
-      {/* Floating Hearts Background */}
-      <View style={styles.heartsBackground}>
-        {[...Array(8)].map((_, i) => (
-          <Animated.View
-            key={i}
-            style={[
-              styles.floatingHeart,
-              {
-                left: `${10 + i * 12}%`,
-                top: `${5 + (i % 4) * 22}%`,
-                opacity: 0.1 + (i % 3) * 0.05,
-                transform: [
-                  { translateY: heartTranslateY },
-                  { scale: 0.4 + (i % 3) * 0.2 },
-                ],
-              },
-            ]}
-          >
-            <Ionicons name="heart" size={50} color="#FF6B9D" />
-          </Animated.View>
-        ))}
-      </View>
-
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        {/* Reveal Lines */}
-        <View style={styles.linesContainer}>
-          {REVEAL_LINES.map((line, index) => (
+        <View style={styles.heartsBackground}>
+          {[...Array(8)].map((_, i) => (
             <Animated.View
-              key={index}
+              key={i}
               style={[
-                styles.lineWrapper,
+                styles.floatingHeart,
                 {
-                  opacity: lineAnims[index],
+                  left: `${10 + i * 12}%`,
+                  top: `${5 + (i % 4) * 22}%`,
+                  opacity: 0.1 + (i % 3) * 0.05,
+                  transform: [
+                    { translateY: heartTranslateY },
+                    { scale: 0.4 + (i % 3) * 0.2 },
+                  ],
+                },
+              ]}
+            >
+              <Ionicons name="heart" size={50} color={colors.primary} />
+            </Animated.View>
+          ))}
+        </View>
+
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          <View style={styles.linesContainer}>
+            {REVEAL_LINES.map((line, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.lineWrapper,
+                  {
+                    opacity: lineAnims[index],
+                    transform: [
+                      {
+                        translateY: lineAnims[index].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [30, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Text style={[styles.revealLine, { color: colors.textSecondary }]}>{line}</Text>
+              </Animated.View>
+            ))}
+          </View>
+
+          {showQuestion && (
+            <Animated.View
+              style={[
+                styles.questionContainer,
+                {
+                  opacity: questionAnim,
+                  transform: [{ scale: questionAnim }],
+                },
+              ]}
+            >
+              <ThemedCard variant="glow" glowColor={colors.primary} style={styles.questionCard}>
+                <Ionicons name="heart" size={50} color={colors.primary} />
+                <Text style={[styles.questionText, { color: colors.textPrimary }]}>
+                  Will you be my Valentine,{"\n"}
+                  <Text style={[styles.nameHighlight, { color: colors.primary }]}>{userName}</Text>?
+                </Text>
+              </ThemedCard>
+            </Animated.View>
+          )}
+
+          {showButtons && (
+            <Animated.View
+              style={[
+                styles.buttonsContainer,
+                {
+                  opacity: buttonsAnim,
                   transform: [
                     {
-                      translateY: lineAnims[index].interpolate({
+                      translateY: buttonsAnim.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [30, 0],
+                        outputRange: [40, 0],
                       }),
                     },
                   ],
                 },
               ]}
             >
-              <Text style={styles.revealLine}>{line}</Text>
+              <TouchableOpacity
+                onPress={handleYes}
+                activeOpacity={0.9}
+              >
+                <LinearGradient
+                  colors={colors.gradientPrimary as any}
+                  style={[styles.yesButton, { shadowColor: colors.primary }]}
+                >
+                  <Ionicons name="heart" size={24} color="#FFFFFF" />
+                  <Text style={styles.yesButtonText}>YES</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.yesButtonOutline,
+                  { backgroundColor: colors.card, borderColor: colors.primary },
+                ]}
+                onPress={handleYes}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="heart-outline" size={24} color={colors.primary} />
+                <Text style={[styles.yesButtonTextOutline, { color: colors.primary }]}>
+                  YES
+                </Text>
+              </TouchableOpacity>
             </Animated.View>
-          ))}
-        </View>
+          )}
 
-        {/* The Question */}
-        {showQuestion && (
-          <Animated.View
-            style={[
-              styles.questionContainer,
-              {
-                opacity: questionAnim,
-                transform: [{ scale: questionAnim }],
-              },
-            ]}
-          >
-            <Ionicons name="heart" size={50} color="#FF6B9D" />
-            <Text style={styles.questionText}>
-              Will you be my Valentine,{"\n"}
-              <Text style={styles.nameHighlight}>{userName}</Text>?
-            </Text>
-          </Animated.View>
-        )}
-
-        {/* Yes Buttons */}
-        {showButtons && (
-          <Animated.View
-            style={[
-              styles.buttonsContainer,
-              {
-                opacity: buttonsAnim,
-                transform: [
-                  {
-                    translateY: buttonsAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [40, 0],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
+          {!showQuestion && (
             <TouchableOpacity
-              style={[styles.yesButton, styles.yesButtonPrimary]}
-              onPress={handleYes}
+              style={styles.skipButton}
+              onPress={() => {
+                playClick();
+                router.push('/celebration');
+              }}
               activeOpacity={0.8}
             >
-              <Ionicons name="heart" size={24} color="#FFFFFF" />
-              <Text style={styles.yesButtonText}>YES</Text>
+              <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.yesButton, styles.yesButtonSecondary]}
-              onPress={handleYes}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="heart-outline" size={24} color="#FF6B9D" />
-              <Text style={[styles.yesButtonText, styles.yesButtonTextSecondary]}>
-                YES
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-
-        {/* Skip Button - only show before the question appears */}
-        {!showQuestion && (
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => {
-              playClick();
-              router.push('/celebration');
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.skipButtonText}>Skip</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
-          </TouchableOpacity>
-        )}
-      </Animated.View>
-    </SafeAreaView>
+          )}
+        </Animated.View>
+      </SafeAreaView>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F7',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 16,
     zIndex: 10,
-    padding: 8,
+    padding: 10,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   heartsBackground: {
     position: 'absolute',
@@ -283,34 +289,27 @@ const styles = StyleSheet.create({
   revealLine: {
     fontSize: 22,
     fontWeight: '300',
-    color: '#6B5B6B',
     textAlign: 'center',
     fontStyle: 'italic',
     letterSpacing: 0.5,
   },
   questionContainer: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 32,
-    padding: 36,
     marginBottom: 40,
-    shadowColor: '#FF6B9D',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 12,
+  },
+  questionCard: {
+    alignItems: 'center',
+    paddingVertical: 36,
+    paddingHorizontal: 36,
   },
   questionText: {
     fontSize: 28,
     fontWeight: '300',
-    color: '#4A1942',
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 42,
   },
   nameHighlight: {
     fontWeight: '600',
-    color: '#FF6B9D',
   },
   buttonsContainer: {
     flexDirection: 'row',
@@ -323,24 +322,10 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 30,
     gap: 10,
-  },
-  yesButtonPrimary: {
-    backgroundColor: '#FF6B9D',
-    shadowColor: '#FF6B9D',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 10,
-  },
-  yesButtonSecondary: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#FF6B9D',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   yesButtonText: {
     fontSize: 20,
@@ -348,8 +333,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 2,
   },
-  yesButtonTextSecondary: {
-    color: '#FF6B9D',
+  yesButtonOutline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 18,
+    borderRadius: 30,
+    gap: 10,
+    borderWidth: 2,
+  },
+  yesButtonTextOutline: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
   skipButton: {
     flexDirection: 'row',
@@ -361,7 +357,6 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: '#9B7FA7',
     fontWeight: '500',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,333 +6,322 @@ import {
   TouchableOpacity,
   Animated,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useUser, useAudio } from './_layout';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useAudio, useUser } from './_layout';
+import { useTheme } from './theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from './components/themed';
+import * as Haptics from 'expo-haptics';
 
-interface Poem {
-  id: string;
-  title: string;
-  type: 'sweet' | 'playful' | 'sincere';
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  lines: string[];
-}
+const { width } = Dimensions.get('window');
 
-const POEMS: Poem[] = [
+const POEMS = [
   {
-    id: 'sehaj',
-    title: "Sehaj's Poem",
-    type: 'sweet',
-    icon: 'flower',
-    color: '#FF6B9D',
-    lines: [
-      'In your eyes, I found my home,',
-      'A place where I no longer roam.',
-      'Your smile lights up my darkest days,',
-      'In countless beautiful, gentle ways.',
-      'With every heartbeat, I feel so blessed,',
-      'With you, my love, I am at rest.',
-    ],
-  },
-  {
-    id: 'berryboo',
-    title: "Berryboo's Poem",
-    type: 'playful',
-    icon: 'happy',
-    color: '#FFB347',
-    lines: [
-      'You make me laugh until I cry,',
-      'With you, the time just flies by.',
-      "We're weird together, that's our thing,",
-      'Our inside jokes make my heart sing.',
-      "I'd choose your chaos every day,",
-      'You drive me crazy in the best way!',
-    ],
-  },
-  {
-    id: 'mrssandhu',
-    title: "Mrs. Sandhu's Poem",
-    type: 'sincere',
+    title: "My Heart Knew",
+    content: "From the moment we first spoke,\nMy heart knew you were special.\nIn your laugh, I found my joy,\nIn your eyes, my endless wonder.\nYou are the reason I smile.",
     icon: 'heart',
-    color: '#9B59B6',
-    lines: [
-      'I never knew love could feel this way,',
-      'Until you came and chose to stay.',
-      'You see the parts I try to hide,',
-      'And love me from the other side.',
-      "Through every storm, you hold my hand,",
-      'With you, I finally understand.',
-    ],
+    color: '#E8638F',
+  },
+  {
+    title: "Forever Yours",
+    content: "Through every storm and sunny day,\nI choose you, again and again.\nYou are my home, my peace,\nThe calm within my chaos.\nForever, I am yours.",
+    icon: 'sunny',
+    color: '#FBBF24',
+  },
+  {
+    title: "Us",
+    content: "Two hearts that beat as one,\nTwo souls that found each other.\nIn a world of billions,\nI found my everything.\nYou are my miracle.",
+    icon: 'sparkles',
+    color: '#A78BFA',
   },
 ];
 
 export default function Poems() {
   const router = useRouter();
   const { userName } = useUser();
-  const { playClick } = useAudio();
-  const [currentPoemIndex, setCurrentPoemIndex] = useState(0);
-  const [visibleLines, setVisibleLines] = useState(0);
-  const [poemComplete, setPoemComplete] = useState(false);
+  const { colors, isDark } = useTheme();
+  const { playClick, playSuccess, playComplete } = useAudio();
+  const [currentPoem, setCurrentPoem] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const lineAnims = useRef(POEMS[0].lines.map(() => new Animated.Value(0))).current;
-
-  const currentPoem = POEMS[currentPoemIndex];
-  const isLastPoem = currentPoemIndex === POEMS.length - 1;
+  const poemAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 600,
+      duration: 800,
       useNativeDriver: true,
     }).start();
   }, []);
 
   useEffect(() => {
-    // Reset animations when poem changes
-    lineAnims.forEach((anim) => anim.setValue(0));
-    setVisibleLines(0);
-    setPoemComplete(false);
+    poemAnim.setValue(0);
+    Animated.spring(poemAnim, {
+      toValue: 1,
+      tension: 50,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, [currentPoem]);
 
-    // Animate lines one by one
-    const animateLines = () => {
-      currentPoem.lines.forEach((_, index) => {
-        setTimeout(() => {
-          Animated.timing(lineAnims[index], {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }).start();
-          setVisibleLines(index + 1);
-          if (index === currentPoem.lines.length - 1) {
-            setTimeout(() => setPoemComplete(true), 500);
-          }
-        }, index * 800);
-      });
-    };
-
-    setTimeout(animateLines, 300);
-  }, [currentPoemIndex]);
-
-  const handleNext = () => {
+  const nextPoem = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     playClick();
-    if (isLastPoem) {
-      router.push('/confession');
-    } else {
-      setCurrentPoemIndex((prev) => prev + 1);
+    if (currentPoem < POEMS.length - 1) {
+      setCurrentPoem(currentPoem + 1);
     }
   };
 
+  const prevPoem = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    playClick();
+    if (currentPoem > 0) {
+      setCurrentPoem(currentPoem - 1);
+    }
+  };
+
+  const poem = POEMS[currentPoem];
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => { playClick(); router.back(); }}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
-      </TouchableOpacity>
+    <ThemedBackground>
+      <SafeAreaView style={styles.container}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { playClick(); router.back(); }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          <Text style={styles.pageLabel}>A Poem for {userName}</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+            <Text style={[styles.pageLabel, { color: colors.textSecondary }]}>Love Poems</Text>
+            <Text style={[styles.forText, { color: colors.textMuted }]}>Written for {userName}</Text>
 
-          {/* Poem Type Indicator */}
-          <View style={styles.poemTypeContainer}>
-            {POEMS.map((poem, index) => (
-              <View
-                key={poem.id}
-                style={[
-                  styles.poemDot,
-                  index === currentPoemIndex && {
-                    backgroundColor: poem.color,
-                    transform: [{ scale: 1.3 }],
-                  },
-                ]}
-              />
-            ))}
-          </View>
+            <Text style={[styles.counter, { color: colors.primary }]}>
+              {currentPoem + 1} / {POEMS.length}
+            </Text>
 
-          {/* Poem Card */}
-          <View
-            style={[
-              styles.poemCard,
-              { borderTopColor: currentPoem.color },
-            ]}
-          >
-            <View style={styles.poemHeader}>
-              <Ionicons
-                name={currentPoem.icon}
-                size={32}
-                color={currentPoem.color}
-              />
-              <Text style={[styles.poemTitle, { color: currentPoem.color }]}>
-                {currentPoem.title}
-              </Text>
-            </View>
-
-            <View style={styles.linesContainer}>
-              {currentPoem.lines.map((line, index) => (
-                <Animated.View
-                  key={index}
-                  style={[
-                    styles.lineContainer,
+            <Animated.View
+              style={[
+                styles.poemWrapper,
+                {
+                  opacity: poemAnim,
+                  transform: [
                     {
-                      opacity: lineAnims[index],
-                      transform: [
-                        {
-                          translateY: lineAnims[index].interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [20, 0],
-                          }),
-                        },
-                      ],
+                      scale: poemAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.95, 1],
+                      }),
                     },
-                  ]}
-                >
-                  <Text style={styles.poemLine}>{line}</Text>
-                </Animated.View>
-              ))}
-            </View>
-          </View>
-
-          {/* Progress */}
-          <Text style={styles.progressText}>
-            Poem {currentPoemIndex + 1} of {POEMS.length}
-          </Text>
-
-          {/* Next Button */}
-          {poemComplete && (
-            <Animated.View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: currentPoem.color }]}
-                onPress={handleNext}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonText}>
-                  {isLastPoem ? 'Continue' : 'Next Poem'}
-                </Text>
-                <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
+                  ],
+                },
+              ]}
+            >
+              <ThemedCard variant="glow" glowColor={poem.color} style={styles.poemCard}>
+                <View style={[styles.iconCircle, { backgroundColor: poem.color + '20' }]}>
+                  <Ionicons name={poem.icon as any} size={40} color={poem.color} />
+                </View>
+                <Text style={[styles.poemTitle, { color: poem.color }]}>{poem.title}</Text>
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                <Text style={[styles.poemContent, { color: colors.textPrimary }]}>{poem.content}</Text>
+              </ThemedCard>
             </Animated.View>
-          )}
 
-          {/* Skip Button */}
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => {
-              playClick();
-              router.push('/confession');
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.skipButtonText}>Skip</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
-          </TouchableOpacity>
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+            <View style={styles.navButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.navButton,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  currentPoem === 0 && styles.navButtonDisabled,
+                ]}
+                onPress={prevPoem}
+                disabled={currentPoem === 0}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={24}
+                  color={currentPoem === 0 ? colors.textMuted : colors.primary}
+                />
+              </TouchableOpacity>
+
+              <View style={styles.dotsContainer}>
+                {POEMS.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      { backgroundColor: colors.border },
+                      currentPoem === index && { backgroundColor: colors.primary },
+                    ]}
+                  />
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.navButton,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  currentPoem === POEMS.length - 1 && styles.navButtonDisabled,
+                ]}
+                onPress={nextPoem}
+                disabled={currentPoem === POEMS.length - 1}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={24}
+                  color={currentPoem === POEMS.length - 1 ? colors.textMuted : colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                playComplete();
+                router.push('/confession');
+              }}
+              activeOpacity={0.9}
+              style={{ marginTop: 24 }}
+            >
+              <LinearGradient
+                colors={colors.gradientPrimary as any}
+                style={[styles.button, { shadowColor: colors.primary }]}
+              >
+                <Text style={styles.buttonText}>Continue</Text>
+                <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={() => {
+                playClick();
+                router.push('/confession');
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </Animated.View>
+        </ScrollView>
+      </SafeAreaView>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F7',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 16,
     zIndex: 10,
-    padding: 8,
+    padding: 10,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   scrollContent: {
     flexGrow: 1,
     padding: 24,
-    justifyContent: 'center',
+    paddingTop: 100,
   },
   content: {
     alignItems: 'center',
   },
   pageLabel: {
     fontSize: 14,
-    color: '#9B7FA7',
     letterSpacing: 3,
     textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  forText: {
+    fontSize: 14,
+    fontStyle: 'italic',
     marginBottom: 20,
   },
-  poemTypeContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+  counter: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 20,
   },
-  poemDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#E8D8E8',
+  poemWrapper: {
+    width: '100%',
   },
   poemCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 28,
-    width: '100%',
-    borderTopWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  poemHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 24,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   poemTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '600',
+    marginBottom: 16,
   },
-  linesContainer: {
-    minHeight: 200,
+  divider: {
+    width: 60,
+    height: 2,
+    borderRadius: 1,
+    marginBottom: 20,
   },
-  lineContainer: {
-    marginBottom: 12,
-  },
-  poemLine: {
+  poemContent: {
     fontSize: 17,
-    lineHeight: 28,
-    color: '#4A1942',
+    lineHeight: 30,
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  progressText: {
-    fontSize: 13,
-    color: '#9B7FA7',
-    marginTop: 20,
-  },
-  buttonContainer: {
+  navButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 24,
+    gap: 20,
+  },
+  navButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  navButtonDisabled: {
+    opacity: 0.5,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 36,
     paddingVertical: 16,
     borderRadius: 30,
-    gap: 8,
-    shadowColor: '#000',
+    gap: 10,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -340,6 +329,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   skipButton: {
     flexDirection: 'row',
@@ -351,7 +341,6 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: '#9B7FA7',
     fontWeight: '500',
   },
 });
