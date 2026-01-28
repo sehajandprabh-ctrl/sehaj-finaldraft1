@@ -15,28 +15,26 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAudio } from './_layout';
+import { useTheme } from './theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from './components/themed';
+import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
 const CELL_SIZE = Math.min((width - 32) / 8, 40);
 
-// Grid: 8 columns x 8 rows
-// null = black cell, number or '' = white cell
-// 6 words: SOULMATE, FOREVER, ALWAYS, HOME, SEHAJ, PRABH
-
 const GRID_STRUCTURE = [
-  //0     1     2     3     4     5     6     7
-  [null, null, null, null, null, null, null, null], // row 0
-  [null,   1, null, null, null, null, null, null],  // row 1: FOREVER starts
-  [  2,   '',  '',   '',   '',    3,   '',   ''],   // row 2: SOULMATE, ALWAYS starts
-  [null,  '', null, null, null,   '', null, null],  // row 3
-  [  4,   '',    5,   '',   '',   '', null, null],  // row 4: SEHAJ, HOME starts
-  [null,  '',   '',    6,   '',   '',   '',   ''],  // row 5: PRABH
-  [null,  '',   '', null, null,   '', null, null],  // row 6
-  [null,  '',   '', null, null,   '', null, null],  // row 7
+  [null, null, null, null, null, null, null, null],
+  [null,   1, null, null, null, null, null, null],
+  [  2,   '',  '',   '',   '',    3,   '',   ''],
+  [null,  '', null, null, null,   '', null, null],
+  [  4,   '',    5,   '',   '',   '', null, null],
+  [null,  '',   '',    6,   '',   '',   '',   ''],
+  [null,  '',   '', null, null,   '', null, null],
+  [null,  '',   '', null, null,   '', null, null],
 ];
 
-// Answers - 6 words with verified intersections
 const ANSWERS = {
   across: {
     2: { word: 'SOULMATE', row: 2, col: 0, hint: "What you feel like to me" },
@@ -52,8 +50,8 @@ const ANSWERS = {
 
 export default function Crossword() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [grid, setGrid] = useState<(string | null)[][]>(() => {
-    // Initialize grid with empty strings for white cells
     return GRID_STRUCTURE.map(row => 
       row.map(cell => cell === null ? null : '')
     );
@@ -80,7 +78,6 @@ export default function Crossword() {
   };
 
   const checkCompletion = (newGrid: (string | null)[][]) => {
-    // Check all across words
     for (const [num, data] of Object.entries(ANSWERS.across)) {
       let word = '';
       for (let i = 0; i < data.word.length; i++) {
@@ -89,7 +86,6 @@ export default function Crossword() {
       if (word.toUpperCase() !== data.word) return false;
     }
     
-    // Check all down words
     for (const [num, data] of Object.entries(ANSWERS.down)) {
       let word = '';
       for (let i = 0; i < data.word.length; i++) {
@@ -112,7 +108,6 @@ export default function Crossword() {
       setSelectedCell({ row, col });
     }
     
-    // Focus the input
     const key = `${row}-${col}`;
     inputRefs.current[key]?.focus();
   };
@@ -128,7 +123,6 @@ export default function Crossword() {
     if (letter) {
       playSuccess();
       
-      // Move to next cell
       let nextRow = row;
       let nextCol = col;
       
@@ -157,9 +151,9 @@ export default function Crossword() {
       }
     }
     
-    // Check completion
     if (checkCompletion(newGrid)) {
       setIsComplete(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       playComplete();
       Keyboard.dismiss();
       Animated.spring(completeAnim, {
@@ -173,8 +167,7 @@ export default function Crossword() {
 
   const handleKeyPress = (e: any, row: number, col: number) => {
     if (e.nativeEvent.key === 'Backspace' && !grid[row]?.[col]) {
-      playClick(); // Cute sound on backspace
-      // Move back on backspace if cell is empty
+      playClick();
       let prevRow = row;
       let prevCol = col;
       
@@ -205,7 +198,7 @@ export default function Crossword() {
     const isBlack = cellValue === null;
     
     if (isBlack) {
-      return <View key={`${row}-${col}`} style={[styles.cell, styles.blackCell]} />;
+      return <View key={`${row}-${col}`} style={[styles.cell, { backgroundColor: colors.background }]} />;
     }
     
     return (
@@ -213,18 +206,18 @@ export default function Crossword() {
         key={`${row}-${col}`}
         style={[
           styles.cell,
-          styles.whiteCell,
-          isSelected && styles.selectedCell,
+          { backgroundColor: colors.card, borderColor: colors.border },
+          isSelected && { backgroundColor: colors.primaryGlow, borderColor: colors.primary, borderWidth: 2 },
         ]}
         onPress={() => handleCellPress(row, col)}
         activeOpacity={0.7}
       >
         {cellNumber !== null && (
-          <Text style={styles.cellNumber}>{cellNumber}</Text>
+          <Text style={[styles.cellNumber, { color: colors.secondary }]}>{cellNumber}</Text>
         )}
         <TextInput
           ref={(ref) => { inputRefs.current[`${row}-${col}`] = ref; }}
-          style={styles.cellInput}
+          style={[styles.cellInput, { color: colors.textPrimary }]}
           value={cellValue || ''}
           onChangeText={(text) => handleInput(text, row, col)}
           onKeyPress={(e) => handleKeyPress(e, row, col)}
@@ -240,153 +233,158 @@ export default function Crossword() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => { playClick(); router.back(); }}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
-      </TouchableOpacity>
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+    <ThemedBackground showFloatingElements={false}>
+      <SafeAreaView style={styles.container}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { playClick(); router.back(); }}
+          activeOpacity={0.7}
         >
-          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-            <Text style={styles.pageLabel}>Our Love Crossword</Text>
-            <Text style={styles.subtitle}>Fill in our story 💕</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
 
-            {/* Direction Toggle */}
-            <View style={styles.directionContainer}>
-              <TouchableOpacity
-                style={[styles.directionBtn, direction === 'across' && styles.directionBtnActive]}
-                onPress={() => { playClick(); setDirection('across'); }}
-              >
-                <Ionicons name="arrow-forward" size={16} color={direction === 'across' ? '#FFF' : '#FF6B9D'} />
-                <Text style={[styles.directionText, direction === 'across' && styles.directionTextActive]}>Across</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.directionBtn, direction === 'down' && styles.directionBtnActive]}
-                onPress={() => { playClick(); setDirection('down'); }}
-              >
-                <Ionicons name="arrow-down" size={16} color={direction === 'down' ? '#FFF' : '#FF6B9D'} />
-                <Text style={[styles.directionText, direction === 'down' && styles.directionTextActive]}>Down</Text>
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+              <Text style={[styles.pageLabel, { color: colors.textSecondary }]}>Our Love Crossword</Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>Fill in our story 💕</Text>
 
-            {/* Crossword Grid */}
-            <View style={styles.gridContainer}>
-              {GRID_STRUCTURE.map((row, rowIndex) => (
-                <View key={rowIndex} style={styles.gridRow}>
-                  {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
-                </View>
-              ))}
-            </View>
-
-            {/* Clues */}
-            <View style={styles.cluesContainer}>
-              <View style={styles.clueSection}>
-                <Text style={styles.clueHeader}>
-                  <Ionicons name="arrow-forward" size={14} color="#FF6B9D" /> Across
-                </Text>
-                {Object.entries(ANSWERS.across).map(([num, data]) => (
-                  <Text key={num} style={styles.clueText}>
-                    <Text style={styles.clueNum}>{num}.</Text> {data.hint}
-                  </Text>
-                ))}
-              </View>
-              
-              <View style={styles.clueSection}>
-                <Text style={styles.clueHeader}>
-                  <Ionicons name="arrow-down" size={14} color="#9B59B6" /> Down
-                </Text>
-                {Object.entries(ANSWERS.down).map(([num, data]) => (
-                  <Text key={num} style={styles.clueText}>
-                    <Text style={styles.clueNum}>{num}.</Text> {data.hint}
-                  </Text>
-                ))}
-              </View>
-            </View>
-
-            {/* Completion */}
-            {isComplete && (
-              <Animated.View
-                style={[
-                  styles.completeContainer,
-                  {
-                    opacity: completeAnim,
-                    transform: [{ scale: completeAnim }],
-                  },
-                ]}
-              >
-                <View style={styles.celebrationEmojis}>
-                  <Text style={styles.emoji}>🎉</Text>
-                  <Text style={styles.emoji}>💕</Text>
-                  <Text style={styles.emoji}>🎉</Text>
-                </View>
-                <Ionicons name="heart" size={60} color="#FF6B9D" />
-                <Text style={styles.completeTitle}>You Did It! 🎉</Text>
-                <Text style={styles.completeText}>
-                  You know our love story by heart!
-                </Text>
-                <View style={styles.starRow}>
-                  <Ionicons name="star" size={24} color="#FFD700" />
-                  <Ionicons name="star" size={24} color="#FFD700" />
-                  <Ionicons name="star" size={24} color="#FFD700" />
-                </View>
+              <View style={styles.directionContainer}>
                 <TouchableOpacity
-                  style={styles.continueButton}
+                  style={[
+                    styles.directionBtn,
+                    { backgroundColor: colors.card, borderColor: colors.primary },
+                    direction === 'across' && { backgroundColor: colors.primary },
+                  ]}
+                  onPress={() => { playClick(); setDirection('across'); }}
+                >
+                  <Ionicons name="arrow-forward" size={16} color={direction === 'across' ? '#FFF' : colors.primary} />
+                  <Text style={[styles.directionText, direction === 'across' && styles.directionTextActive]}>Across</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.directionBtn,
+                    { backgroundColor: colors.card, borderColor: colors.secondary },
+                    direction === 'down' && { backgroundColor: colors.secondary },
+                  ]}
+                  onPress={() => { playClick(); setDirection('down'); }}
+                >
+                  <Ionicons name="arrow-down" size={16} color={direction === 'down' ? '#FFF' : colors.secondary} />
+                  <Text style={[styles.directionText, { color: colors.secondary }, direction === 'down' && styles.directionTextActive]}>Down</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.gridContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                {GRID_STRUCTURE.map((row, rowIndex) => (
+                  <View key={rowIndex} style={styles.gridRow}>
+                    {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
+                  </View>
+                ))}
+              </View>
+
+              <ThemedCard style={styles.cluesContainer}>
+                <View style={styles.clueSection}>
+                  <Text style={[styles.clueHeader, { color: colors.primary }]}>
+                    <Ionicons name="arrow-forward" size={14} color={colors.primary} /> Across
+                  </Text>
+                  {Object.entries(ANSWERS.across).map(([num, data]) => (
+                    <Text key={num} style={[styles.clueText, { color: colors.textSecondary }]}>
+                      <Text style={[styles.clueNum, { color: colors.primary }]}>{num}.</Text> {data.hint}
+                    </Text>
+                  ))}
+                </View>
+                
+                <View style={styles.clueSection}>
+                  <Text style={[styles.clueHeader, { color: colors.secondary }]}>
+                    <Ionicons name="arrow-down" size={14} color={colors.secondary} /> Down
+                  </Text>
+                  {Object.entries(ANSWERS.down).map(([num, data]) => (
+                    <Text key={num} style={[styles.clueText, { color: colors.textSecondary }]}>
+                      <Text style={[styles.clueNum, { color: colors.secondary }]}>{num}.</Text> {data.hint}
+                    </Text>
+                  ))}
+                </View>
+              </ThemedCard>
+
+              {isComplete && (
+                <Animated.View
+                  style={[
+                    styles.completeContainer,
+                    {
+                      backgroundColor: colors.card,
+                      opacity: completeAnim,
+                      transform: [{ scale: completeAnim }],
+                    },
+                  ]}
+                >
+                  <View style={styles.celebrationEmojis}>
+                    <Text style={styles.emoji}>🎉</Text>
+                    <Text style={styles.emoji}>💕</Text>
+                    <Text style={styles.emoji}>🎉</Text>
+                  </View>
+                  <Ionicons name="heart" size={60} color={colors.primary} />
+                  <Text style={[styles.completeTitle, { color: colors.primary }]}>You Did It! 🎉</Text>
+                  <Text style={[styles.completeText, { color: colors.textSecondary }]}>
+                    You know our love story by heart!
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      playComplete();
+                      router.push('/card-match');
+                    }}
+                    activeOpacity={0.9}
+                  >
+                    <LinearGradient
+                      colors={colors.gradientPrimary as any}
+                      style={[styles.continueButton, { shadowColor: colors.primary }]}
+                    >
+                      <Text style={styles.continueButtonText}>Continue</Text>
+                      <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
+
+              {!isComplete && (
+                <TouchableOpacity
+                  style={styles.skipButton}
                   onPress={() => {
-                    playComplete();
+                    playClick();
                     router.push('/card-match');
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.continueButtonText}>Continue</Text>
-                  <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+                  <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
-              </Animated.View>
-            )}
-
-            {/* Skip Button */}
-            {!isComplete && (
-              <TouchableOpacity
-                style={styles.skipButton}
-                onPress={() => {
-                  playClick();
-                  router.push('/card-match');
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.skipButtonText}>Skip</Text>
-                <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
-              </TouchableOpacity>
-            )}
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+              )}
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F7',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 16,
     zIndex: 10,
-    padding: 8,
+    padding: 10,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   keyboardView: {
     flex: 1,
@@ -395,20 +393,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
     paddingBottom: 40,
+    paddingTop: 80,
   },
   content: {
     alignItems: 'center',
   },
   pageLabel: {
     fontSize: 14,
-    color: '#9B7FA7',
     letterSpacing: 3,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B5B6B',
     marginBottom: 16,
   },
   directionContainer: {
@@ -423,30 +420,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: '#FF6B9D',
-  },
-  directionBtnActive: {
-    backgroundColor: '#FF6B9D',
   },
   directionText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FF6B9D',
   },
   directionTextActive: {
     color: '#FFFFFF',
   },
   gridContainer: {
-    backgroundColor: '#4A1942',
-    padding: 3,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    padding: 4,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   gridRow: {
     flexDirection: 'row',
@@ -458,18 +444,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-  },
-  blackCell: {
-    backgroundColor: '#4A1942',
-  },
-  whiteCell: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 3,
-  },
-  selectedCell: {
-    backgroundColor: '#FFE4EC',
-    borderWidth: 2,
-    borderColor: '#FF6B9D',
+    borderRadius: 4,
+    borderWidth: 1,
   },
   cellNumber: {
     position: 'absolute',
@@ -477,7 +453,6 @@ const styles = StyleSheet.create({
     left: 2,
     fontSize: 8,
     fontWeight: '700',
-    color: '#9B59B6',
   },
   cellInput: {
     width: '100%',
@@ -485,21 +460,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: CELL_SIZE * 0.55,
     fontWeight: '700',
-    color: '#4A1942',
     padding: 0,
     marginTop: 4,
   },
   cluesContainer: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
     marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   clueSection: {
     marginBottom: 16,
@@ -507,31 +473,22 @@ const styles = StyleSheet.create({
   clueHeader: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#4A1942',
     marginBottom: 10,
   },
   clueText: {
     fontSize: 14,
-    color: '#5A4A5A',
     marginBottom: 8,
     lineHeight: 20,
     paddingLeft: 8,
   },
   clueNum: {
     fontWeight: '700',
-    color: '#FF6B9D',
   },
   completeContainer: {
     marginTop: 24,
     padding: 28,
-    backgroundColor: '#FFFFFF',
     borderRadius: 28,
     alignItems: 'center',
-    shadowColor: '#FF6B9D',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
     width: '100%',
   },
   celebrationEmojis: {
@@ -542,32 +499,28 @@ const styles = StyleSheet.create({
   emoji: {
     fontSize: 40,
   },
-  starRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginVertical: 12,
-  },
   completeTitle: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#FF6B9D',
     marginTop: 12,
   },
   completeText: {
     fontSize: 16,
-    color: '#5A4A5A',
     textAlign: 'center',
     marginVertical: 12,
   },
   continueButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF6B9D',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 25,
     gap: 8,
     marginTop: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   continueButtonText: {
     color: '#FFFFFF',
@@ -584,7 +537,6 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: '#9B7FA7',
     fontWeight: '500',
   },
 });

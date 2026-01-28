@@ -15,12 +15,17 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useUser, useAudio } from './_layout';
+import { useTheme } from './theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from './components/themed';
+import * as Haptics from 'expo-haptics';
 
 export default function Personalization() {
   const router = useRouter();
   const { setUserName } = useUser();
   const { playKiss, playClick } = useAudio();
+  const { colors, isDark } = useTheme();
   const [name, setName] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -42,6 +47,7 @@ export default function Personalization() {
 
   const handleContinue = () => {
     Keyboard.dismiss();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     playKiss();
     const finalName = name.trim() || 'Sehaj';
     setUserName(finalName);
@@ -49,99 +55,115 @@ export default function Personalization() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => { playClick(); router.back(); }}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
-      </TouchableOpacity>
-
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    <ThemedBackground>
+      <SafeAreaView style={styles.container}>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { playClick(); router.back(); }}
+          activeOpacity={0.7}
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
+
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           >
-            <Animated.View
-              style={[
-                styles.content,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }],
-                },
-              ]}
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
-              <Ionicons name="sparkles" size={40} color="#FF6B9D" style={styles.icon} />
-
-              <Text style={styles.prompt}>What should I call you?</Text>
-
-              <Text style={styles.playfulText}>
-                wife, Berryboo, poopypants,{'\n'}whatever your name is 💕
-              </Text>
-
-              <Text style={styles.hint}>(You can skip to continue as Sehaj)</Text>
-
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  value={name}
-                  onChangeText={(text) => { if (text.length > name.length) playClick(); setName(text); }}
-                  placeholder="Your name..."
-                  placeholderTextColor="#C9A7C9"
-                  autoCapitalize="words"
-                  returnKeyType="done"
-                  onSubmitEditing={handleContinue}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleContinue}
-                activeOpacity={0.8}
+              <Animated.View
+                style={[
+                  styles.content,
+                  {
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }],
+                  },
+                ]}
               >
-                <Text style={styles.buttonText}>Continue</Text>
-                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
+                <View style={[styles.iconContainer, { backgroundColor: colors.primaryGlow }]}>
+                  <Ionicons name="sparkles" size={40} color={colors.primary} />
+                </View>
 
-              <TouchableOpacity
-                style={styles.skipButton}
-                onPress={() => {
-                  playClick();
-                  setUserName('Sehaj');
-                  router.push('/crossword');
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.skipButtonText}>Skip</Text>
-                <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
-              </TouchableOpacity>
-            </Animated.View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
-    </SafeAreaView>
+                <Text style={[styles.prompt, { color: colors.textPrimary }]}>
+                  What should I call you?
+                </Text>
+
+                <Text style={[styles.playfulText, { color: colors.primary }]}>
+                  wife, Berryboo, poopypants,{"\n"}whatever your name is 💕
+                </Text>
+
+                <Text style={[styles.hint, { color: colors.textMuted }]}>
+                  (You can skip to continue as Sehaj)
+                </Text>
+
+                <ThemedCard style={styles.inputCard} variant="glow" glowColor={colors.primary}>
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    value={name}
+                    onChangeText={(text) => { if (text.length > name.length) playClick(); setName(text); }}
+                    placeholder="Your name..."
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={handleContinue}
+                  />
+                </ThemedCard>
+
+                <TouchableOpacity
+                  onPress={handleContinue}
+                  activeOpacity={0.9}
+                  style={styles.buttonWrapper}
+                >
+                  <LinearGradient
+                    colors={colors.gradientPrimary as any}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.button, { shadowColor: colors.primary }]}
+                  >
+                    <Text style={styles.buttonText}>Continue</Text>
+                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.skipButton}
+                  onPress={() => {
+                    playClick();
+                    setUserName('Sehaj');
+                    router.push('/crossword');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </Animated.View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F7',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 16,
     zIndex: 10,
-    padding: 8,
+    padding: 10,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   keyboardView: {
     flex: 1,
@@ -156,20 +178,23 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 60,
   },
-  icon: {
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 30,
   },
   prompt: {
     fontSize: 28,
     fontWeight: '300',
-    color: '#4A1942',
     marginBottom: 12,
     textAlign: 'center',
     letterSpacing: 0.5,
   },
   playfulText: {
     fontSize: 15,
-    color: '#FF6B9D',
     marginBottom: 8,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -177,38 +202,29 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 13,
-    color: '#9B7FA7',
-    marginBottom: 40,
+    marginBottom: 30,
     fontStyle: 'italic',
   },
-  inputContainer: {
+  inputCard: {
     width: '100%',
-    marginBottom: 40,
+    marginBottom: 30,
+    padding: 0,
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#FFD6E6',
-    borderRadius: 16,
     padding: 18,
     fontSize: 18,
-    color: '#4A1942',
     textAlign: 'center',
-    shadowColor: '#FF6B9D',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+  },
+  buttonWrapper: {
+    marginTop: 10,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF6B9D',
     paddingHorizontal: 36,
     paddingVertical: 16,
     borderRadius: 30,
     gap: 10,
-    shadowColor: '#FF6B9D',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -230,7 +246,6 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: '#9B7FA7',
     fontWeight: '500',
   },
 });
