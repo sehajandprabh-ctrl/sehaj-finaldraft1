@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { useTheme } from './theme/ThemeContext';
+import { useTheme } from '../src/theme/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 const WHISPER_AUDIO = 'https://customer-assets.emergentagent.com/job_sehaj-love/artifacts/n3ojmbeq_e6d8893a.mp3';

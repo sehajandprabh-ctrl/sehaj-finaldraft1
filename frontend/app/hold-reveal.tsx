@@ -11,8 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAudio } from './_layout';
-import { useTheme } from './theme/ThemeContext';
-import { ThemedBackground, ThemedCard } from './components/themed';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from '../src/components/themed';
 import * as Haptics from 'expo-haptics';
 
 export default function HoldReveal() {

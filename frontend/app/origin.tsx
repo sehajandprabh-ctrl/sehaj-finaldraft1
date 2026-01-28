@@ -13,8 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser, useAudio } from './_layout';
-import { useTheme } from './theme/ThemeContext';
-import { ThemedBackground, ThemedCard } from './components/themed';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from '../src/components/themed';
 import * as Haptics from 'expo-haptics';
 
 const STICKER_CITY = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/7apudxnx_IMG_5617.jpeg';
